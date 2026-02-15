@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>あなたについて100の質問</title>
+<style>
+  body { 
+    font-family: 'Comic Sans MS', sans-serif;
+    margin: 0; padding: 0;
+    display: flex; justify-content: center;
+    min-height: 100vh;
+    transition: background 0.3s, color 0.3s;
+    background: linear-gradient(135deg, #ffdde1, #ee9ca7), repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0 10px, transparent 10px 20px);
+    color: #ff1493;
+  }
+  .container {
+    max-width: 600px;
+    width: 100%;
+    padding: 15px;
+    box-sizing: border-box;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    position: relative;
+  }
+  h1 { text-align: center; font-size: 1.6em; margin-bottom: 15px; }
+  #progress { margin-bottom: 15px; font-weight: bold; text-align: center; }
+  .question { 
+    padding: 12px; 
+    border-radius: 12px; 
+    box-shadow: 0 3px 6px rgba(0,0,0,0.1); 
+    margin-bottom: 12px; 
+    border: 2px solid;
+    transition: border-color 0.3s, background 0.3s, color 0.3s;
+  }
+  label { font-weight: bold; display: block; margin-bottom: 5px; font-size: 0.95em; }
+  input[type="text"] {
+    width: 100%; 
+    padding: 8px; 
+    font-size: 0.95em; 
+    border: 2px solid; 
+    border-radius: 8px; 
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
+  }
+  input[type="text"]:focus { border-color: inherit; }
+  .nav-buttons, .share-button { text-align: center; margin-top: 8px; }
+  button { 
+    color: white; 
+    border: none; 
+    border-radius: 8px; 
+    cursor: pointer; 
+    padding: 8px 15px; 
+    font-size: 0.95em; 
+    margin: 3px;
+    transition: background 0.3s;
+  }
+  button:hover { opacity: 0.9; }
+  .share-options { display: none; flex-direction: column; margin-top: 5px; }
+  .share-options button { margin: 3px 0; }
+  .theme-buttons { position: fixed; left: 10px; bottom: 10px; display: flex; flex-direction: column; }
+  #themeBtn {
+    background: #ffffff;
+    color: #000000;
+    border: 2px solid #000000;
+  }
+  .theme-select { display: none; flex-direction: column; margin-top: 5px; border-radius: 8px; padding: 5px; }
+  .theme-select button { margin: 2px 0; padding: 5px; font-size: 0.9em; border-radius: 5px; border: none; transition: opacity 0.3s; color: #fff; }
+  .theme-select button:hover { opacity: 0.8; }
+  .new-btn { position: fixed; right: 10px; top: 10px; padding: 6px 12px; font-size: 0.85em; }
+  .reset-confirm { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.3); z-index: 1000; text-align: center; }
+  .reset-confirm button { margin: 5px; color: #fff; border: none; border-radius: 5px; padding: 6px 12px; cursor: pointer; transition: opacity 0.3s; }
+  .reset-confirm button:hover { opacity: 0.8; }
+  .credit { position: fixed; right: 10px; bottom: 10px; font-size: 0.7em; color: #aaa; }
+  @media (max-width: 640px) { .container { padding: 10px; } input[type="text"] { padding: 6px; font-size: 0.9em; } button { padding: 6px 12px; font-size: 0.9em; } }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>あなたについて100の質問</h1>
+<div id="progress">質問 1～5 / 100</div>
+<div id="questions"></div>
+<div class="nav-buttons">
+  <button id="prevBtn" disabled>前へ</button>
+  <button id="nextBtn">次へ</button>
+</div>
+<div class="share-button">
+  <button id="shareBtn">回答を共有</button>
+  <div class="share-options" id="shareOptions">
+    <button id="twitterShare">Twitterで共有</button>
+    <button id="lineShare">LINEで共有</button>
+    <button id="copyShare">URLをコピー</button>
+  </div>
+</div>
+<div class="theme-buttons">
+  <button id="themeBtn">背景切り替え</button>
+  <div class="theme-select" id="themeSelect">
+    <button id="pinkTheme">ピンク</button>
+    <button id="blueTheme">水色</button>
+    <button id="yellowTheme">黄色</button>
+    <button id="blackTheme">黒</button>
+  </div>
+</div>
+<button class="new-btn" id="newBtn">新規</button>
+<div class="reset-confirm" id="resetConfirm">
+  <p>内容をすべて削除しますか？</p>
+  <button id="resetYes">はい</button>
+  <button id="resetNo">いいえ</button>
+</div>
+<div class="credit">製作者：あっしー＆チャッピー</div>
+<script>
+let currentTheme='pink';
+const themeColors={
+  pink:{gradient:'linear-gradient(135deg, #ffdde1, #ee9ca7)', text:'#ff1493', border:'#ff69b4', qBg:'#fff0f5', inputBg:'#fff'},
+  blue:{gradient:'linear-gradient(135deg, #d0e6ff, #87cefa)', text:'#1e90ff', border:'#00bfff', qBg:'#e6f2ff', inputBg:'#f0f8ff'},
+  yellow:{gradient:'linear-gradient(135deg, #fffacd, #ffd700)', text:'#daa520', border:'#ffbf00', qBg:'#fff8dc', inputBg:'#fff'},
+  black:{gradient:'linear-gradient(135deg, #555555, #000000)', text:'#ffffff', border:'#444444', qBg:'#333333', inputBg:'#222222'}
+};
+
+function changeTheme(color){
+  currentTheme=color;
+  const t=themeColors[color];
+  document.body.style.background=t.gradient+', repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0 10px, transparent 10px 20px)';
+  document.body.style.color=t.text;
+  document.querySelectorAll('.question').forEach(q=>{ q.style.borderColor=t.border; q.style.background=t.qBg; q.style.color=t.text; });
+  document.querySelectorAll('input[type=text]').forEach(i=>{ i.style.borderColor=t.border; i.style.background=i.value?'#fff':t.inputBg; i.style.color=t.text; });
+  document.querySelectorAll('.theme-select button, .nav-buttons button, .share-button button, .new-btn, #resetYes, #resetNo').forEach(b=>{ b.style.backgroundColor=t.border; });
+}
+
+const themeBtn=document.getElementById('themeBtn');
+const themeSelect=document.getElementById('themeSelect');
+themeBtn.addEventListener('click',()=>{ themeSelect.style.display=themeSelect.style.display==='flex'?'none':'flex'; });
+document.getElementById('pinkTheme').addEventListener('click',()=>changeTheme('pink'));
+document.getElementById('blueTheme').addEventListener('click',()=>changeTheme('blue'));
+document.getElementById('yellowTheme').addEventListener('click',()=>changeTheme('yellow'));
+document.getElementById('blackTheme').addEventListener('click',()=>changeTheme('black'));
+
+let allQuestions=[
+  '最近ハマっていることは？','好きな食べ物は？','嫌いな食べ物は？','趣味は？','最近見た映画やドラマは？','一番好きな色は？','得意なことは？','苦手なことは？','最近読んだ本は？','お気に入りの曲は？','最近嬉しかったことは？','最近悲しかったことは？','ストレス解消法は？','ペットはいる？','好きな動物は？','休日の過ごし方は？','好きなスポーツは？','尊敬する人は？','好きな場所は？','将来の夢は？','最近挑戦したことは？','得意な科目は？','苦手な科目は？','好きなゲームは？','苦手なゲームは？','好きな季節は？','嫌いな季節は？','朝型？夜型？','好きな飲み物は？','嫌いな飲み物は？','旅行で行きたい場所は？','一番の思い出は？','最近笑ったことは？','最近泣いたことは？','好きな服のブランドは？','ファッションのこだわりは？','好きな映画ジャンルは？','苦手な映画ジャンルは？','好きな漫画は？','嫌いな漫画は？','最近覚えた新しいことは？','挑戦してみたいことは？','好きなテレビ番組は？','好きなYouTubeチャンネルは？','自分の性格を一言で言うと？','友達の中での自分の立ち位置は？','兄弟姉妹はいる？','一番仲のいい友達は？','好きな言葉は？','座右の銘は？','自分にとっての幸せとは？','今一番欲しいものは？','好きなブランドは？','好きな香りは？','苦手な匂いは？','最近感動したことは？','人生で一番大切にしていることは？','挑戦してみたいスポーツは？','一番好きな季節の過ごし方は？','自分の特技は？','自分の弱点は？','最近学んだことは？','好きなアプリは？','嫌いなアプリは？','一番好きな場所はどこ？','行ってみたい国は？','最近ハマっていることは？','好きなアイドルは？','嫌いなことは？','好きな香水は？','自分を動物に例えると？','今の気分は？','好きな花は？','嫌いな花は？','好きな食べ物の組み合わせは？','得意な料理は？','苦手な料理は？','最近驚いたことは？','最近学んだ面白いことは？','好きなYouTube動画ジャンルは？','好きな漫画キャラクターは？','一番影響を受けた人は？','自分の夢は？','今の目標は？','最近の出来事で嬉しかったことは？','最近の出来事で悲しかったことは？','自分のモットーは？','人生で一番大事にしていることは？','一番の宝物は？','好きな動物の名前は？','嫌いな動物は？','挑戦してみたい趣味は？','一番好きなスポーツ選手は？','一番好きな映画は？','好きなゲームキャラクターは？','最近の趣味は？','最近の勉強内容は？','最近挑戦したことは？','将来叶えたい夢は？','最後に一言どうぞ！'
+];
+
+const questionsPerPage=5;
+let currentPage=0;
+let answers=JSON.parse(localStorage.getItem('answers')||'{}');
+
+function renderQuestions(){
+  const start=currentPage*questionsPerPage;
+  const end=start+questionsPerPage;
+  const container=document.getElementById('questions');
+  container.innerHTML='';
+  for(let i=start;i<end&&i<allQuestions.length;i++){
+    const qDiv=document.createElement('div');
+    qDiv.className='question';
+    qDiv.innerHTML=`<label>Q${i+1}: ${allQuestions[i]}</label><input type=\"text\" value=\"${answers[i]||''}\" data-index=\"${i}\" placeholder=\"A:\\" style='width:100%; overflow:hidden;'>`;
+    container.appendChild(qDiv);
+  }
+  changeTheme(currentTheme);
+  document.getElementById('progress').innerText=`質問 ${start+1}～${Math.min(end,allQuestions.length)} / ${allQuestions.length}`;
+  document.getElementById('prevBtn').disabled=currentPage===0;
+  document.getElementById('nextBtn').disabled=end>=allQuestions.length;
+}
+
+function saveAnswers(){
+  document.querySelectorAll('#questions input').forEach(input=>{ answers[input.getAttribute('data-index')]=input.value; });
+  localStorage.setItem('answers',JSON.stringify(answers));
+}
+
+document.getElementById('nextBtn').addEventListener('click',()=>{ saveAnswers(); if((currentPage+1)*questionsPerPage<allQuestions.length){ currentPage++; renderQuestions(); } });
+document.getElementById('prevBtn').addEventListener('click',()=>{ saveAnswers(); if(currentPage>0){ currentPage--; renderQuestions(); } });
+
+const shareBtn=document.getElementById('shareBtn');
+const shareOptions=document.getElementById('shareOptions');
+shareBtn.addEventListener('click',()=>{ shareOptions.style.display = shareOptions.style.display==='flex'?'none':'flex'; });
+
+const twitterBtn=document.getElementById('twitterShare');
+const lineBtn=document.getElementById('lineShare');
+const copyBtn=document.getElementById('copyShare');
+function getShareURL(){ saveAnswers(); return `${location.origin}${location.pathname}?data=${encodeURIComponent(JSON.stringify(answers))}`; }
+
+twitterBtn.addEventListener('click',()=>{ window.open(`https://twitter.com/intent/tweet?text=私の100の質問の回答はこちら！&url=${encodeURIComponent(getShareURL())}`,'_blank'); });
+lineBtn.addEventListener('click',()=>{ window.open(`https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(getShareURL())}`,'_blank'); });
+copyBtn.addEventListener('click',()=>{ navigator.clipboard.writeText(getShareURL()); alert('URLをコピーしました！'); });
+
+// 新規ボタン処理
+const newBtn=document.getElementById('newBtn');
+const resetConfirm=document.getElementById('resetConfirm');
+const resetYes=document.getElementById('resetYes');
+const resetNo=document.getElementById('resetNo');
+newBtn.addEventListener('click',()=>{ resetConfirm.style.display='block'; });
+resetYes.addEventListener('click',()=>{ answers={}; localStorage.setItem('answers', JSON.stringify(answers)); renderQuestions(); resetConfirm.style.display='none'; });
+resetNo.addEventListener('click',()=>{ resetConfirm.style.display='none'; });
+
+window.addEventListener('DOMContentLoaded',()=>{
+  const params=new URLSearchParams(location.search);
+  if(params.has('data')){
+    answers=JSON.parse(decodeURIComponent(params.get('data')));
+    localStorage.setItem('answers',JSON.stringify(answers));
+  }
+  renderQuestions();
+  changeTheme('pink');
+});
+</script>
+</div>
+</body>
+</html>
